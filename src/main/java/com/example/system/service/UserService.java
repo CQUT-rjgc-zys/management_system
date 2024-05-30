@@ -29,4 +29,6 @@ public interface UserService {
     void deleteOneById(Long id);
 
     void deleteListByIds(List<String> ids);
+
+    void updatePassword(Long id, String password);
 }

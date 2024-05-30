@@ -7,9 +7,11 @@ import com.example.system.dto.UserDTO;
 import com.example.system.entity.DepartmentEntity;
 import com.example.system.entity.TaskAllocationEntity;
 import com.example.system.entity.UserEntity;
+import com.example.system.entity.UserTaskLinkEntity;
 import com.example.system.mapper.DepartmentMapper;
 import com.example.system.mapper.TaskAllocationMapper;
 import com.example.system.mapper.UserMapper;
+import com.example.system.mapper.UserTaskLinkMapper;
 import com.example.system.service.DepartmentService;
 import com.example.system.service.UserService;
 import com.example.system.util.JwtTokenUtil;
@@ -53,6 +55,9 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, UserEntity> impleme
 
     @Autowired
     private UserMapper userMapper;
+
+    @Autowired
+    private UserTaskLinkMapper userTaskLinkMapper;
 
     @Override
     public void addUser(byte gender, String name, Long departmentId) {
@@ -276,10 +281,15 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, UserEntity> impleme
         }
         queryWrapper.clear();
 
-        queryWrapper.eq("task_id", taskId);
-        queryWrapper.eq("status", 1);
-        List<TaskAllocationEntity> taskAllocationEntities1 = taskAllocationMapper.selectList(queryWrapper);
-        List<Long> userIds1 = taskAllocationEntities1.stream().map(TaskAllocationEntity::getUserId).collect(Collectors.toList());
+        QueryWrapper<UserTaskLinkEntity> wrapper = new QueryWrapper<>();
+        wrapper.eq("task_id", taskId);
+        List<UserTaskLinkEntity> userTaskLinkEntities = userTaskLinkMapper.selectList(wrapper);
+        List<Long> userIds1 = userTaskLinkEntities.stream().map(UserTaskLinkEntity::getUserId).collect(Collectors.toList());
+
+//        queryWrapper.eq("task_id", taskId);
+//        queryWrapper.eq("status", 1);
+//        List<TaskAllocationEntity> taskAllocationEntities1 = taskAllocationMapper.selectList(queryWrapper);
+//        List<Long> userIds1 = taskAllocationEntities1.stream().map(TaskAllocationEntity::getUserId).collect(Collectors.toList());
         if (userIds1.size() != 0) {
             List<UserEntity> userEntities = listByIds(userIds1);
             List<UserDTO> status1 =  userEntities.stream().map(entity -> {
@@ -332,6 +342,13 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, UserEntity> impleme
     public void deleteListByIds(List<String> ids) {
 //        List<Long> idList = JSON.parseArray(ids, Long.class);
         removeByIds(ids);
+    }
+
+    @Override
+    public void updatePassword(Long id, String password) {
+        UserEntity user = getById(id);
+        user.setPassword(MD5.encrypt(password));
+        updateById(user);
     }
 
     private String generateJobNumber() {

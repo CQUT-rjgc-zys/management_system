@@ -92,7 +92,7 @@ public class UserController {
 
     @PutMapping("/updatePassword")
     public CommonResult<Void> updatePassword(@RequestParam("id") Long id, @RequestParam("password") String password) {
-        System.out.println();
+        userService.updatePassword(id, password);
         return CommonResult.success();
     }
 
@@ -105,11 +105,12 @@ public class UserController {
         return CommonResult.success();
     }
 
+    /**
+     * 根据任务id获取员工信息
+     */
     @GetMapping("/getUsersByFiledTaskId/{taskId}")
     public CommonResult<Map<String, List<UserDTO>>> getUsersByFiledTaskId(@PathVariable("taskId") Long taskId) {
         Map<String, List<UserDTO>> users = userService.getUsersByFiledTaskId(taskId);
         return CommonResult.success(users);
     }
-
-
 }

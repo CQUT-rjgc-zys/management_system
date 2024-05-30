@@ -6,8 +6,10 @@ import com.example.system.dto.Coordinate;
 import com.example.system.dto.FieldTaskDTO;
 import com.example.system.entity.FieldTaskEntity;
 import com.example.system.entity.TaskAllocationEntity;
+import com.example.system.entity.UserTaskLinkEntity;
 import com.example.system.mapper.FieldTaskMapper;
 import com.example.system.mapper.TaskAllocationMapper;
+import com.example.system.mapper.UserTaskLinkMapper;
 import com.example.system.service.FieldTaskService;
 import com.example.system.util.UUIDUtil;
 import org.springframework.beans.BeanUtils;
@@ -33,6 +35,9 @@ public class FieldTaskTaskServiceImpl extends ServiceImpl<FieldTaskMapper, Field
 
     @Autowired
     private TaskAllocationMapper taskAllocationMapper;
+
+    @Autowired
+    private UserTaskLinkMapper userTaskLinkMapper;
 
     @Override
     public void addFieldTask(FieldTaskDTO fieldTask) {
@@ -80,8 +85,13 @@ public class FieldTaskTaskServiceImpl extends ServiceImpl<FieldTaskMapper, Field
         if (taskEntity == null) {
             throw new IllegalArgumentException("不存在id为：" + id + "的任务信息");
         }
-        if (taskEntity.getStatus() != 2) {
-            throw new IllegalArgumentException("未完成的任务不能删除");
+        if (taskEntity.getStatus() == 1) {
+            QueryWrapper<UserTaskLinkEntity> queryWrapper = new QueryWrapper<>();
+            queryWrapper.eq("task_id", id);
+            List<UserTaskLinkEntity> userTaskLinks = userTaskLinkMapper.selectList(queryWrapper);
+            if (!userTaskLinks.isEmpty()) {
+                throw new IllegalArgumentException("已有外勤人员正在执行此任务，不能删除");
+            }
         }
 
         this.removeById(id);
@@ -127,6 +137,12 @@ public class FieldTaskTaskServiceImpl extends ServiceImpl<FieldTaskMapper, Field
         }
         BeanUtils.copyProperties(fieldTask, taskEntity);
 //        taskEntity.setTaskSpot(fieldTask.getTaskSpot().toString());
+
+
+        int status = taskEntity.getStatus();
+        if (status == 0 && taskEntity.getDescription() != null && taskEntity.getTaskSpot() != null) {
+            taskEntity.setStatus(1);
+        }
         updateById(taskEntity);
 
     }
@@ -224,11 +240,10 @@ public class FieldTaskTaskServiceImpl extends ServiceImpl<FieldTaskMapper, Field
 
     @Override
     public List<FieldTaskDTO> getAcceptedFieldTasksByUserId(Long userId) {
-        QueryWrapper<TaskAllocationEntity> queryWrapper = new QueryWrapper<>();
+        QueryWrapper<UserTaskLinkEntity> queryWrapper = new QueryWrapper<>();
         queryWrapper.eq("user_id", userId);
-        queryWrapper.eq("status", 1);
-        List<TaskAllocationEntity> taskAllocationEntities = taskAllocationMapper.selectList(queryWrapper);
-        List<Long> taskIds = taskAllocationEntities.stream().map(TaskAllocationEntity::getTaskId).collect(Collectors.toList());
+        List<UserTaskLinkEntity> userTaskLinks = userTaskLinkMapper.selectList(queryWrapper);
+        List<Long> taskIds = userTaskLinks.stream().map(UserTaskLinkEntity::getTaskId).collect(Collectors.toList());
         if (taskIds.isEmpty()) {
             return new ArrayList<>();
         }

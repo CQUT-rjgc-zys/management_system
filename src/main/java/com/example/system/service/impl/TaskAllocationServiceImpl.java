@@ -1,16 +1,17 @@
 package com.example.system.service.impl;
 
 import com.alibaba.fastjson2.JSON;
-import com.alibaba.fastjson2.JSONArray;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
-import com.example.system.entity.TaskAllocationInfoDTO;
+import com.example.system.dto.TaskAllocationInfoDTO;
 import com.example.system.entity.FieldTaskEntity;
 import com.example.system.entity.TaskAllocationEntity;
 import com.example.system.entity.UserEntity;
+import com.example.system.entity.UserTaskLinkEntity;
 import com.example.system.mapper.FieldTaskMapper;
 import com.example.system.mapper.TaskAllocationMapper;
 import com.example.system.mapper.UserMapper;
+import com.example.system.mapper.UserTaskLinkMapper;
 import com.example.system.service.TaskAllocationService;
 import com.example.system.util.UUIDUtil;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -29,6 +30,9 @@ public class TaskAllocationServiceImpl extends ServiceImpl<TaskAllocationMapper,
     @Autowired
     private UserMapper userMapper;
 
+    @Autowired
+    private UserTaskLinkMapper userTaskLinkMapper;
+
     @Override
     public void addAllocationInfos(String param) {
         List<TaskAllocationInfoDTO> list = JSON.parseArray(param, TaskAllocationInfoDTO.class);
@@ -43,9 +47,6 @@ public class TaskAllocationServiceImpl extends ServiceImpl<TaskAllocationMapper,
         FieldTaskEntity fieldTaskEntity = fieldTaskMapper.selectOne(taskQueryWrapper);
         if (fieldTaskEntity == null) {
             throw new IllegalArgumentException("不存在id为：" + taskId + "的任务信息");
-        }
-        if (userIds.isEmpty()) {
-            return;
         }
         // 校验用户信息是否存在
         QueryWrapper<UserEntity> userQueryWrapper = new QueryWrapper<>();
@@ -70,10 +71,10 @@ public class TaskAllocationServiceImpl extends ServiceImpl<TaskAllocationMapper,
 
     @Override
     public void deleteAllocationInfo(Long userId, Long taskId) {
-        QueryWrapper<TaskAllocationEntity> taskAllocationQueryWrapper = new QueryWrapper<>();
-        taskAllocationQueryWrapper.eq("user_id", userId);
-        taskAllocationQueryWrapper.eq("task_id", taskId);
-        remove(taskAllocationQueryWrapper);
+        QueryWrapper<UserTaskLinkEntity> queryWrapper = new QueryWrapper<>();
+        queryWrapper.eq("user_id", userId);
+        queryWrapper.eq("task_id", taskId);
+        userTaskLinkMapper.delete(queryWrapper);
     }
 
     @Override
@@ -94,6 +95,10 @@ public class TaskAllocationServiceImpl extends ServiceImpl<TaskAllocationMapper,
         // 更新任务分配信息
         taskAllocationEntity.setStatus(status);
         updateById(taskAllocationEntity);
+        UserTaskLinkEntity userTaskLinkEntity = new UserTaskLinkEntity();
+        userTaskLinkEntity.setTaskId(taskAllocationEntity.getTaskId());
+        userTaskLinkEntity.setUserId(taskAllocationEntity.getUserId());
+        userTaskLinkMapper.insert(userTaskLinkEntity);
     }
 
     @Override

@@ -1,6 +1,6 @@
 package com.example.system.controller;
 
-import com.example.system.entity.TaskAllocationInfoDTO;
+import com.example.system.dto.TaskAllocationInfoDTO;
 import com.example.system.result.CommonResult;
 import com.example.system.service.TaskAllocationService;
 import org.springframework.beans.factory.annotation.Autowired;
