@@ -19,11 +19,8 @@ public class RemindMessageEntity implements Serializable {
     @TableField("user_id")
     private Long userId;
 
-    /**
-     * 打卡信息ID
-     */
-    @TableField("dk_info")
-    private Long dkInfo;
+    @TableField("task_name")
+    private String taskName;
 
     @TableField("receive")
     private boolean receive;

@@ -34,9 +34,6 @@ public class FieldTaskTaskServiceImpl extends ServiceImpl<FieldTaskMapper, Field
     private FieldTaskMapper fieldTaskMapper;
 
     @Autowired
-    private TaskAllocationMapper taskAllocationMapper;
-
-    @Autowired
     private UserTaskLinkMapper userTaskLinkMapper;
 
     @Override
